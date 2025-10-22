@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>West Coast Region - Performance Graph</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 40px;
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 5px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1em;
+            opacity: 0.9;
+        }
+
+        .controls {
+            padding: 30px 40px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .controls h3 {
+            margin-bottom: 15px;
+            color: #667eea;
+            font-size: 1.1em;
+        }
+
+        .location-checkboxes {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 12px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .checkbox-item:hover {
+            background: #f0f0f0;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .checkbox-item label {
+            cursor: pointer;
+            font-size: 0.9em;
+            flex: 1;
+        }
+
+        .color-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 2px solid #ddd;
+        }
+
+        .button-group {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .chart-container {
+            padding: 40px;
+            position: relative;
+            height: 600px;
+        }
+
+        .back-link {
+            padding: 20px 40px;
+            background: #f8f9fa;
+        }
+
+        .back-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1em;
+        }
+
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>West Coast Region - Performance Over Time</h1>
+            <p>Manager: Jared Sonne | Interactive Rating Trends</p>
+        </div>
+
+        <div class="controls">
+            <h3>Select Locations to Display:</h3>
+            <div class="location-checkboxes" id="locationCheckboxes"></div>
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="selectAll()">Select All</button>
+                <button class="btn btn-secondary" onclick="deselectAll()">Deselect All</button>
+                <button class="btn btn-primary" onclick="toggleAverage()">Toggle Average</button>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <canvas id="performanceChart"></canvas>
+        </div>
+
+        <div class="back-link">
+            <a href="index.html">← Back to Dashboard</a>
+        </div>
+    </div>
+
+    <script>
+        // Data for West Coast region
+        const months = ["1/1/20", "2/1/20", "3/1/20", "4/1/20", "5/1/20", "6/1/20", "7/1/20", "8/1/20", "9/1/20", "10/1/20", "11/1/20", "12/1/20", "1/1/21", "2/1/21", "3/1/21", "4/1/21", "5/1/21", "6/1/21", "7/1/21", "8/1/21", "9/1/21", "10/1/21", "11/1/21", "12/1/21", "1/1/22", "2/1/22", "3/1/22", "4/1/22", "5/1/22", "6/1/22", "7/1/22", "8/1/22", "9/1/22", "10/1/22", "11/1/22", "12/1/22", "1/1/23", "2/1/23", "3/1/23", "4/1/23", "5/1/23", "6/1/23", "7/1/23", "8/1/23", "9/1/23", "10/1/23", "11/1/23", "12/1/23", "1/1/24", "2/1/24", "3/1/24", "4/1/24", "5/1/24", "6/1/24", "7/1/24", "8/1/24", "9/1/24", "10/1/24", "11/1/24", "12/1/24", "1/1/25", "2/1/25", "3/1/25", "4/1/25", "5/1/25", "6/1/25", "7/1/25", "8/1/25", "9/1/25", "10/1/25"];
+
+        const locations = [
+            { name: '13428 Lincoln Way', city: 'Auburn', data: [2.7, 2.7, 2.7, 2.7, 2.7, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7], color: '#e74c3c' },
+            { name: '785 Oak Grove Rd, #M', city: 'Concord', data: [2.4, 2.4, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.4, 2.3, 2.4, 2.4, 2.4, 2.5, 2.5, 2.6, 2.6, 2.6, 2.7, 2.6, 2.6, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.9, 2.9, 2.9, 2.9, 2.9, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 3.0, 3.1, 3.1, 3.1, 3.2, 3.2, 3.2, 3.1, 3.1], color: '#3498db' },
+            { name: '2205 Sunset Blvd, Suite 501', city: 'Rocklin', data: [2.3, 2.3, 2.3, 2.4, 2.4, 2.4, 2.2, 2.3, 2.3, 2.3, 2.2, 2.1, 2.2, 2.1, 2.2, 2.3, 2.4, 2.4, 2.5, 2.4, 2.4, 2.3, 2.3, 2.4, 2.4, 2.3, 2.3, 2.3, 2.3, 2.2, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.4, 2.3, 2.3, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.5, 2.4, 2.4, 2.5, 2.6, 3.3, 3.4, 3.7, 3.8, 3.8, 3.9, 3.8, 3.8, 3.8], color: '#2ecc71' },
+            { name: '2841 S El Camino Real', city: 'San Mateo', data: [2.9, 2.9, 2.9, 2.9, 2.9, 2.9, 2.8, 2.9, 2.9, 2.9, 2.9, 2.9, 2.9, 2.9, 2.9, 2.9, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.9, 2.9, 2.9, 2.8, 2.8, 2.8, 2.8, 2.9, 2.9, 2.9, 2.9, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 3.7, 4.1, 4.2, 4.3, 4.3, 4.4, 4.4, 4.4, 4.4], color: '#f39c12' },
+            { name: '1031 Triangle Ct', city: 'West Sacramento', data: [2.9, 2.9, 2.9, 2.9, 2.8, 2.8, 2.8, 2.8, 2.8, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 3.1, 3.3, 3.4, 3.5, 3.6, 3.6, 3.6, 3.6, 3.6], color: '#9b59b6' },
+            { name: '1861 E Gibson Road, Suite C', city: 'Woodland', data: [2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.6, 2.7, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.5, 2.5, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.4, 2.4, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.5, 2.4, 2.4, 2.4, 2.8, 3.0, 3.4, 3.5, 3.6, 3.7, 3.7, 3.7, 3.7], color: '#1abc9c' },
+            { name: '711 Tank Farm Rd Suite 210 SMB', city: 'San Luis Obispo', data: [5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 4.8, 4.8, 4.8, 4.8, 4.8, 4.8, 4.8, 4.9, 4.9, 4.9, 4.9, 4.9, 4.9, 4.9, 4.9, 4.9, 4.9, 4.9, 4.9, 4.9, 4.9, 4.9, 4.9, 4.9, 4.9, 4.9, 4.9, 4.9, 4.9, 4.9, 4.9, 4.9, 4.8, 4.8, 4.8, 4.8, 4.8, 4.8, 4.8, 4.8, 4.6, 4.6, 4.6, 4.6, 4.6, 4.6, 4.6, 4.6, 4.6, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.6, 4.5, 4.5, 4.5], color: '#34495e' },
+            { name: '646 US-101', city: 'Depoe Bay', data: [2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.9, 2.9, 2.9, 2.9, 3.1, 3.3, 3.4, 3.4, 3.4, 3.4, 3.5, 3.5, 3.6], color: '#e67e22' },
+            { name: '635 Ray J Glatt Circle B', city: 'Woodburn', data: [2.4, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.4, 2.4, 2.4, 2.5, 2.5, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.5, 2.5, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.5, 2.6, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6], color: '#95a5a6' },
+            { name: '281 N 3rd Ave', city: 'Stayton', data: [2.1, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 1.9, 1.9, 1.9, 1.9, 1.9, 2.0, 1.9, 1.9, 1.9, 1.9, 1.9, 1.9, 1.9, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 2.0, 2.2, 2.2, 2.2, 2.2, 2.4, 2.5, 2.5, 2.5], color: '#16a085' },
+            { name: '36653 US-26', city: 'Sandy', data: [2.2, 2.2, 2.2, 2.2, 2.2, 2.1, 2.1, 2.1, 2.0, 2.0, 1.9, 1.9, 1.9, 2.0, 2.0, 1.9, 2.0, 2.1, 2.2, 2.2, 2.2, 2.2, 2.2, 2.2, 2.2, 2.2, 2.2, 2.2, 2.2, 2.2, 2.2, 2.2, 2.2, 2.2, 2.2, 2.2, 2.1, 2.1, 2.1, 2.1, 2.1, 2.1, 2.1, 2.1, 2.1, 2.1, 2.1, 2.1, 2.1, 2.1, 2.1, 2.1, 2.1, 2.1, 2.1, 2.1, 2.1, 2.1, 2.1, 2.1, 2.1, 2.2, 2.2, 2.2, 2.2, 2.2, 2.1, 2.1, 2.1, 2.1], color: '#c0392b' },
+            { name: '385 NE Alsea HWY #6', city: 'Waldport', data: [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 4.0, 4.5, 4.5, 4.7, 3.8, 3.8, 3.8, 3.2, 3.2, 3.2, 3.2, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.1, 3.1, 3.4, 3.4, 3.4, 3.4, 3.4, 3.4, 3.2, 3.2, 3.2, 3.0, 3.0, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 4.1, 4.4, 4.6, 4.7, 4.7, 4.7, 4.7, 4.7, 4.7], color: '#27ae60' },
+            { name: '353 NW 2nd Ave', city: 'Canby', data: [2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.2, 2.2, 2.2, 2.2, 2.2, 2.2, 2.2, 2.2, 2.2, 2.2, 2.2, 2.2, 2.2, 2.2, 2.2, 2.2, 2.1, 2.1, 2.1, 2.1, 2.1, 2.1, 2.1, 2.2, 2.2, 2.2, 2.1, 2.1, 2.2, 2.1, 2.1, 2.1, 2.1, 2.1, 2.1, 2.1, 2.1, 2.1, 2.1, 2.1, 2.1, 2.1, 2.8, 2.9, 3.0, 3.1, 3.2, 3.2, 3.3, 3.3, 3.3], color: '#d35400' },
+            { name: '430 S Bridge St', city: 'Sheridan', data: [2.8, 2.8, 2.8, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.6, 2.6, 2.6, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.6, 2.6, 2.6, 2.5, 2.6, 2.5, 2.4, 2.4, 2.4, 2.4, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5], color: '#8e44ad' },
+            { name: '900 Lenora Street, Suite 140', city: 'Seattle', data: [1.0, 1.0, 1.9, 2.0, 2.0, 2.1, 1.8, 1.9, 1.9, 1.9, 2.0, 2.1, 2.2, 2.1, 2.1, 2.1, 2.1, 2.0, 2.1, 2.1, 2.1, 2.2, 2.1, 2.2, 2.2, 2.2, 2.2, 2.1, 2.1, 2.1, 2.1, 2.0, 2.0, 2.0, 2.0, 2.0, 1.9, 1.9, 1.9, 1.9, 1.9, 1.9, 1.9, 1.9, 1.9, 1.9, 1.9, 1.9, 1.9, 1.8, 1.8, 1.8, 1.9, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 2.2, 2.5, 2.7, 2.7, 2.8, 2.9, 3.0, 3.2, 3.3], color: '#2980b9' },
+            { name: '511 Morris St, Suite 2', city: 'La Conner', data: [2.0, 1.9, 1.9, 1.9, 1.9, 1.9, 1.9, 1.8, 1.9, 1.9, 1.9, 1.9, 1.9, 1.8, 1.9, 2.0, 2.0, 2.0, 2.0, 2.1, 2.1, 2.1, 2.2, 2.2, 2.2, 2.1, 2.1, 2.1, 2.1, 2.1, 2.1, 2.2, 2.2, 2.2, 2.2, 2.2, 2.2, 2.2, 2.2, 2.2, 2.2, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.5, 2.7, 2.7, 2.8, 2.9, 2.9, 3.0, 3.2, 3.2], color: '#c0392b' },
+            { name: '112 W 8th St', city: 'Port Angeles', data: [2.8, 2.8, 2.8, 2.8, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.6, 2.6, 2.6, 2.6, 2.6, 2.7, 2.7, 2.7, 2.8, 2.8, 2.8, 2.7, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.7, 2.8, 2.8, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.6, 2.6, 2.7, 2.7, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.5, 2.5, 2.5, 2.5, 2.6, 2.8, 2.9, 3.0, 3.0, 3.2, 3.4, 3.5, 3.5], color: '#16a085' },
+            { name: '4519 SE Mile Hill Dr', city: 'Port Orchard', data: [2.8, 2.9, 2.8, 2.8, 2.8, 2.8, 2.8, 2.7, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.6, 2.7, 2.7, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.7, 2.8, 2.9, 2.9, 3.0, 3.0, 3.2, 3.2, 3.3], color: '#f1c40f' },
+            { name: '1111 11th Ave', city: 'Longview', data: [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 3.8, 3.8, 3.8, 3.8, 3.8, 3.8, 3.8, 3.9, 4.1, 4.1, 4.1, 4.2, 4.3], color: '#e74c3c' },
+            { name: '1400 W Washington St #108', city: 'Sequim', data: [3.2, 3.2, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.0, 3.0, 3.0, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.1, 3.1, 3.1, 3.2, 3.2, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.0, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1], color: '#3498db' },
+            { name: '9300 271st St NW Suite B1', city: 'Stanwood', data: [2.2, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.2, 2.2, 2.2, 2.2, 2.2, 2.2, 2.3, 2.3, 2.2, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.4, 2.4, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.4, 2.4, 2.3, 2.3, 2.4, 2.4, 2.4, 2.4, 2.3, 2.3, 2.3, 2.3, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.0, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4], color: '#2ecc71' }
+        ];
+
+        const average = {
+            name: 'WEST AVERAGE',
+            city: 'Average',
+            data: [2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.6, 2.7, 2.6, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.6, 2.6, 2.6, 2.6, 2.6, 2.7, 2.7, 2.7, 2.7, 2.6, 2.6, 2.7, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.6, 2.7, 2.7, 2.7, 2.7, 2.9, 3.1, 3.1, 3.2, 3.2, 3.3, 3.3, 3.3, 3.3],
+            color: '#000000'
+        };
+
+        let chart;
+        let showAverage = true;
+
+        // Initialize checkboxes
+        function initCheckboxes() {
+            const container = document.getElementById('locationCheckboxes');
+            locations.forEach((loc, index) => {
+                const div = document.createElement('div');
+                div.className = 'checkbox-item';
+                div.innerHTML = `
+                    <input type="checkbox" id="loc${index}" checked onchange="updateChart()">
+                    <div class="color-indicator" style="background-color: ${loc.color}"></div>
+                    <label for="loc${index}">${loc.city}</label>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // Initialize chart
+        function initChart() {
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+
+            const datasets = locations.map((loc, index) => ({
+                label: loc.city,
+                data: loc.data,
+                borderColor: loc.color,
+                backgroundColor: loc.color + '20',
+                borderWidth: 2,
+                tension: 0.4,
+                pointRadius: 4,
+                pointHoverRadius: 6
+            }));
+
+            // Add average dataset
+            if (showAverage) {
+                datasets.push({
+                    label: average.name,
+                    data: average.data,
+                    borderColor: average.color,
+                    backgroundColor: average.color + '20',
+                    borderWidth: 4,
+                    tension: 0.4,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    borderDash: []
+                });
+            }
+
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            onClick: null,
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 15,
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Google Reviews Rating Trends - West Coast Region',
+                            font: {
+                                size: 18,
+                                weight: 'bold'
+                            },
+                            padding: 20
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y.toFixed(1);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            min: 0.0,
+                            max: 5.0,
+                            ticks: {
+                                stepSize: 0.5
+                            },
+                            title: {
+                                display: true,
+                                text: 'Rating',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                }
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Month',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                }
+                            }
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                }
+            });
+        }
+
+        // Update chart based on selections
+        function updateChart() {
+            const datasets = [];
+
+            locations.forEach((loc, index) => {
+                const checkbox = document.getElementById('loc' + index);
+                if (checkbox.checked) {
+                    datasets.push({
+                        label: loc.city,
+                        data: loc.data,
+                        borderColor: loc.color,
+                        backgroundColor: loc.color + '20',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    });
+                }
+            });
+
+            // Add average if enabled
+            if (showAverage) {
+                datasets.push({
+                    label: average.name,
+                    data: average.data,
+                    borderColor: average.color,
+                    backgroundColor: average.color + '20',
+                    borderWidth: 4,
+                    tension: 0.4,
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                });
+            }
+
+            chart.data.datasets = datasets;
+            chart.update();
+        }
+
+        // Select all locations
+        function selectAll() {
+            locations.forEach((loc, index) => {
+                document.getElementById('loc' + index).checked = true;
+            });
+            updateChart();
+        }
+
+        // Deselect all locations
+        function deselectAll() {
+            locations.forEach((loc, index) => {
+                document.getElementById('loc' + index).checked = false;
+            });
+            updateChart();
+        }
+
+        // Toggle average line
+        function toggleAverage() {
+            showAverage = !showAverage;
+            updateChart();
+        }
+
+        // Initialize on page load
+        window.onload = function() {
+            initCheckboxes();
+            initChart();
+        };
+    </script>
+</body>
+</html>
