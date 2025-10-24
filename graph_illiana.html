@@ -153,12 +153,144 @@
         .back-link a:hover {
             text-decoration: underline;
         }
+
+        .rankings-section {
+            padding: 40px;
+            background: #f8f9fa;
+            border-top: 2px solid #e9ecef;
+        }
+
+        .rankings-section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .date-range-selector {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .date-input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .date-input-group label {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .date-input-group select {
+            padding: 8px 12px;
+            border: 2px solid #667eea;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+        }
+
+        .rankings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .ranking-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .ranking-card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .ranking-list {
+            list-style: none;
+        }
+
+        .ranking-list li {
+            padding: 10px;
+            margin-bottom: 8px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ranking-list li .rank {
+            font-weight: 700;
+            color: #667eea;
+            margin-right: 10px;
+            min-width: 25px;
+        }
+
+        .ranking-list li .location-name {
+            flex: 1;
+            font-weight: 500;
+        }
+
+        .ranking-list li .rating-value {
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 4px;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .rating-value.excellent {
+            background: #d4edda;
+            color: #28a745;
+        }
+
+        .rating-value.good {
+            background: #e2e3e5;
+            color: #5a6268;
+        }
+
+        .rating-value.fair {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .rating-value.poor {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .rating-value.change {
+            background: #cfe2ff;
+            color: #084298;
+        }
+
+        .rating-value.positive {
+            background: #d1e7dd;
+            color: #0f5132;
+        }
+
+        .rating-value.negative {
+            background: #f8d7da;
+            color: #842029;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>Illiana Region - Performance Over Time</h1>
+            <p style="font-size: 0.9em; margin-bottom: 5px; opacity: 0.85;">Created by Moiz Uddin</p>
             <p>Manager: Joe Bell | Interactive Rating Trends</p>
         </div>
 
@@ -175,6 +307,46 @@
         <div class="chart-container">
             <canvas id="performanceChart"></canvas>
         </div>
+
+        
+        <div class="rankings-section">
+            <h2>Store Rankings</h2>
+            <div class="date-range-selector">
+                <div class="date-input-group">
+                    <label for="startMonth">Start Month:</label>
+                    <select id="startMonth" onchange="updateRankings()">
+                    </select>
+                    <select id="startYear" onchange="updateRankings()">
+                    </select>
+                </div>
+                <div class="date-input-group">
+                    <label for="endMonth">End Month:</label>
+                    <select id="endMonth" onchange="updateRankings()">
+                    </select>
+                    <select id="endYear" onchange="updateRankings()">
+                    </select>
+                </div>
+            </div>
+
+            <div class="rankings-grid">
+                <div class="ranking-card">
+                    <h3>Best 5 Stores</h3>
+                    <ul class="ranking-list" id="best5List"></ul>
+                </div>
+                <div class="ranking-card">
+                    <h3>Worst 5 Stores</h3>
+                    <ul class="ranking-list" id="worst5List"></ul>
+                </div>
+                <div class="ranking-card">
+                    <h3>Most Improved</h3>
+                    <ul class="ranking-list" id="improvedList"></ul>
+                </div>
+                <div class="ranking-card">
+                    <h3>Most Declined</h3>
+                    <ul class="ranking-list" id="declinedList"></ul>
+                </div>
+            </div>
+                </div>
 
         <div class="back-link">
             <a href="index.html">← Back to Dashboard</a>
@@ -383,10 +555,181 @@
             updateChart();
         }
 
+        // Initialize date selectors
+        function initDateSelectors() {
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                              'July', 'August', 'September', 'October', 'November', 'December'];
+            const years = [2020, 2021, 2022, 2023, 2024, 2025];
+
+            // Populate month dropdowns
+            const startMonthSelect = document.getElementById('startMonth');
+            const endMonthSelect = document.getElementById('endMonth');
+
+            monthNames.forEach((month, index) => {
+                startMonthSelect.add(new Option(month, index));
+                endMonthSelect.add(new Option(month, index));
+            });
+
+            // Populate year dropdowns
+            const startYearSelect = document.getElementById('startYear');
+            const endYearSelect = document.getElementById('endYear');
+
+            years.forEach(year => {
+                startYearSelect.add(new Option(year, year));
+                endYearSelect.add(new Option(year, year));
+            });
+
+            // Set default values (January 2020 to October 2025)
+            startMonthSelect.value = 0;
+            startYearSelect.value = 2020;
+            endMonthSelect.value = 9; // October
+            endYearSelect.value = 2025;
+        }
+
+        // Get month index from month/year
+        function getMonthIndex(month, year) {
+            return (year - 2020) * 12 + month;
+        }
+
+        // Calculate average rating for a range
+        function calculateAverage(data, startIdx, endIdx) {
+            let sum = 0;
+            let count = 0;
+            for (let i = startIdx; i <= endIdx && i < data.length; i++) {
+                if (data[i] !== null && data[i] !== undefined) {
+                    sum += data[i];
+                    count++;
+                }
+            }
+            return count > 0 ? sum / count : 0;
+        }
+
+        // Get rating class
+        function getRatingClass(rating) {
+            if (rating >= 4.0) return 'excellent';
+            if (rating >= 3.0) return 'good';
+            if (rating >= 2.5) return 'fair';
+            return 'poor';
+        }
+
+        // Update rankings based on selected date range
+        function updateRankings() {
+            const startMonth = parseInt(document.getElementById('startMonth').value);
+            const startYear = parseInt(document.getElementById('startYear').value);
+            const endMonth = parseInt(document.getElementById('endMonth').value);
+            const endYear = parseInt(document.getElementById('endYear').value);
+
+            const startIdx = getMonthIndex(startMonth, startYear);
+            const endIdx = getMonthIndex(endMonth, endYear);
+
+            if (startIdx > endIdx) {
+                alert('Start date must be before end date');
+                return;
+            }
+
+            // Calculate metrics for each location
+            const rankings = locations.map(loc => {
+                const avgRating = calculateAverage(loc.data, startIdx, endIdx);
+                const startRating = loc.data[startIdx] || 0;
+                const endRating = loc.data[endIdx] || 0;
+                const change = endRating - startRating;
+
+                return {
+                    name: loc.city,
+                    avgRating: avgRating,
+                    change: change,
+                    startRating: startRating,
+                    endRating: endRating
+                };
+            });
+
+            // Best 5 (highest average)
+            const best5 = [...rankings]
+                .sort((a, b) => b.avgRating - a.avgRating)
+                .slice(0, 5);
+
+            // Worst 5 (lowest average)
+            const worst5 = [...rankings]
+                .sort((a, b) => a.avgRating - b.avgRating)
+                .slice(0, 5);
+
+            // Most Improved (highest positive change)
+            const improved = [...rankings]
+                .filter(item => item.change > 0)
+                .sort((a, b) => b.change - a.change)
+                .slice(0, 5);
+
+            // Most Declined (highest negative change)
+            const declined = [...rankings]
+                .filter(item => item.change < 0)
+                .sort((a, b) => a.change - b.change)
+                .slice(0, 5);
+
+            // Render lists
+            renderRankingList('best5List', best5, 'avgRating');
+            renderRankingList('worst5List', worst5, 'avgRating');
+            renderRankingList('improvedList', improved, 'change');
+            renderRankingList('declinedList', declined, 'change');
+        }
+
+        // Render a ranking list
+        function renderRankingList(elementId, data, metric) {
+            const listElement = document.getElementById(elementId);
+            listElement.innerHTML = '';
+
+            if (data.length === 0) {
+                const li = document.createElement('li');
+                li.style.justifyContent = 'center';
+                li.style.fontStyle = 'italic';
+                li.style.color = '#666';
+                li.textContent = 'No data for selected date range';
+                listElement.appendChild(li);
+                return;
+            }
+
+            data.forEach((item, index) => {
+                const li = document.createElement('li');
+
+                const rankSpan = document.createElement('span');
+                rankSpan.className = 'rank';
+                rankSpan.textContent = `#${index + 1}`;
+
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'location-name';
+                nameSpan.textContent = item.name;
+
+                const valueSpan = document.createElement('span');
+                valueSpan.className = 'rating-value';
+
+                if (metric === 'avgRating') {
+                    valueSpan.textContent = item.avgRating.toFixed(2);
+                    valueSpan.classList.add(getRatingClass(item.avgRating));
+                } else if (metric === 'change') {
+                    const changeText = item.change >= 0 ? `+${item.change.toFixed(2)}` : item.change.toFixed(2);
+                    valueSpan.textContent = changeText;
+                    if (item.change > 0) {
+                        valueSpan.classList.add('positive');
+                    } else if (item.change < 0) {
+                        valueSpan.classList.add('negative');
+                    } else {
+                        valueSpan.classList.add('change');
+                    }
+                }
+
+                li.appendChild(rankSpan);
+                li.appendChild(nameSpan);
+                li.appendChild(valueSpan);
+                listElement.appendChild(li);
+            });
+        }
+
+        
         // Initialize on page load
         window.onload = function() {
             initCheckboxes();
             initChart();
+            initDateSelectors();
+            updateRankings();
         };
     </script>
 </body>
